@@ -47,10 +47,10 @@ Movies are generally dubbed by dubbing artists manually. The dubbed audio is the
 
 
 Contributers-
-Prafful Varshney
-Nishir Agrawal
-Satyam Yadav
-Ayushi Shikha 
+Prafful Varshney,
+Nishir Agrawal,
+Satyam Yadav,
+Ayushi Shikha, 
 Sristi Mishra
 
 Mentored By-
