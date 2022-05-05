@@ -1,4 +1,4 @@
-Lip-Sync Speech-to-Speech
+###Lip-Sync Speech-to-Speech
 (ArIES 2nd year recruitment project)
 When we translate a video from one language to another, lips get out of sync due to characteristics of different languages. So, in this project, we had to Sync the Lips in accordance with the Audio. The project was divided into two tasks-
 Task 1- Translate the audio from English to Hindi.
