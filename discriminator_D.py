@@ -19,28 +19,15 @@ from keras.utils import multi_gpu_model
 import tensorflow as tf
 from keras import backend as K
 
-class ModelMGPU(Model):
-    def __init__(self, ser_model, gpus):
-        pmodel = multi_gpu_model(ser_model, gpus)
-        self.__dict__.update(pmodel.__dict__)
-        self._smodel = ser_model
-
-    def __getattribute__(self, attrname):
-        # return Model.__getattribute__(self, attrname)
-        if 'load' in attrname or 'save' in attrname:
-            return getattr(self._smodel, attrname)
-
-        return super(ModelMGPU, self).__getattribute__(attrname)
-
 def contrastive_loss(y_true, y_pred):
 	margin = 1.
-	loss = (1. - y_true) * K.square(y_pred) + y_true * K.square(K.maximum(0., margin - y_pred))
+	loss = (1. - y_true) * K.square(y_pred) + y_true * K.square(K.maximum(0., margin - y_pred))  #1-y_true = yi, y_pred = d
 	return K.mean(loss)
 
 def conv_block(x, num_filters, kernel_size=3, strides=2, padding='same'):
 	x = Conv2D(filters=num_filters, kernel_size= kernel_size, 
 					strides=strides, padding=padding)(x)
-	x = InstanceNormalization()(x)
+	x = InstanceNormalization()(x)  # to prevent instance-specific mean and covariance shift simplifying the learning process
 	x = LeakyReLU(alpha=.2)(x)
 	return x
 
@@ -80,13 +67,5 @@ def create_model(args, mel_step_size):
 
 	model.summary()
 
-	if args.n_gpu > 1:
-		model = ModelMGPU(model , args.n_gpu)
-		
-	model.compile(loss=contrastive_loss, optimizer=Adam(lr=args.lr)) 
-	
-	return model
 
-if __name__ == '__main__':
-	model = create_model()
-	#plot_model(model, to_file='model.png', show_shapes=True)
+
