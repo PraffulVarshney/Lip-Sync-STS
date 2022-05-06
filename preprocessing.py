@@ -118,10 +118,6 @@ def dump_split(args):
 	_ = [r.result() for r in tqdm(as_completed(futures), total=len(futures))]
 
 
-### hyperparams ####
-parser.add_argument("--img_size", help="Square face image to resize to", default=96, type=int)
-
-args = parser.parse_args()
 
 if __name__ == '__main__':
 	dump_split(args)
