@@ -18,18 +18,6 @@ import tensorflow as tf
 from keras.utils import multi_gpu_model
 from discriminator_D import contrastive_loss
 
-class ModelMGPU(Model):
-    def __init__(self, ser_model, gpus):
-        pmodel = multi_gpu_model(ser_model, gpus)
-        self.__dict__.update(pmodel.__dict__)
-        self._smodel = ser_model
-
-    def __getattribute__(self, attrname):
-        # return Model.__getattribute__(self, attrname)
-        if 'load' in attrname or 'save' in attrname:
-            return getattr(self._smodel, attrname)
-
-        return super(ModelMGPU, self).__getattribute__(attrname)
 
 def conv_block(x, num_filters, kernel_size=3, strides=1, padding='same', act=True):
 	x = Conv2D(filters=num_filters, kernel_size= kernel_size, 
@@ -42,7 +30,7 @@ def conv_block(x, num_filters, kernel_size=3, strides=1, padding='same', act=Tru
 def conv_t_block(x, num_filters, kernel_size=3, strides=2, padding='same'):
 	x = Conv2DTranspose(filters=num_filters, kernel_size= kernel_size, 
 					strides=strides, padding=padding)(x)
-	x = BatchNormalization(momentum=.8)(x)
+	x = BatchNormalization(momentum=.8)(x)  #transformation to keep the mean output close to 0 and the output standard deviation close to 1
 	x = Activation('relu')(x)
 
 	return x
@@ -112,12 +100,6 @@ def create_model(args, mel_step_size):
 	model = Model(inputs=[input_face, input_audio], outputs=prediction)
 	model.summary()		
 	
-	if args.n_gpu > 1:
-		model = ModelMGPU(model , args.n_gpu)
-		
-	model.compile(loss='mae', optimizer=(Adam(lr=args.lr) if hasattr(args, 'lr') else 'adam')) 
-	
-	return model
 
 def create_model_residual(args, mel_step_size):
 	def residual_block(inp, num_filters):
@@ -212,14 +194,7 @@ def create_model_residual(args, mel_step_size):
 	prediction = Activation("sigmoid", name="prediction")(x)
 	
 	model = Model(inputs=[input_face, input_audio], outputs=prediction)
-	model.summary()		
-	
-	if args.n_gpu > 1:
-		model = ModelMGPU(model , args.n_gpu)
-		
-	model.compile(loss='mae', optimizer=(Adam(lr=args.lr) if hasattr(args, 'lr') else 'adam')) 
-	
-	return model
+	model.summary()
 
 def create_combined_model(generator, discriminator, args, mel_step_size):
 	input_face = Input(shape=(args.img_size, args.img_size, 6), name="input_face_comb")
@@ -230,15 +205,3 @@ def create_combined_model(generator, discriminator, args, mel_step_size):
 	d = discriminator([fake_face, input_audio])
 
 	model = Model([input_face, input_audio], [fake_face, d])
-	if args.n_gpu > 1:
-		model = ModelMGPU(model , args.n_gpu)
-
-	model.compile(loss=['mae', contrastive_loss], 
-					optimizer=(Adam(lr=args.lr) if hasattr(args, 'lr') else 'adam'), 
-					loss_weights=[1., .01])
-
-	return model
-
-if __name__ == '__main__':
-	model = create_model_residual()
-	#plot_model(model, to_file='model.png', show_shapes=True)
